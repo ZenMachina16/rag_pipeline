@@ -121,6 +121,7 @@ class SectionChunker:
 if __name__ == "__main__":
     import os
     import sys
+    import pickle
     # Add project root or src to path so we can import loader if executed directly
     sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
     from loader import ResearchPaperLoader
@@ -134,6 +135,10 @@ if __name__ == "__main__":
     print("Chunking documents...")
     chunker = SectionChunker()
     chunks = chunker.chunk_documents(pages)
+    
+    with open("chunks.pkl", "wb") as f:
+        pickle.dump(chunks, f)
+
     
     print(f"\nTotal chunks created: {len(chunks)}")
     print("="*40)
