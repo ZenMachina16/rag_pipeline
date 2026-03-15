@@ -174,9 +174,18 @@ def is_noise_chunk(chunk: dict) -> bool:
         return True
 
     # first line of the chunk matches a known noise pattern
+    # BUT only treat fig/figure matches as noise if the chunk is short
+    # (actual figure captions are short; paragraphs that reference a figure are not)
     first_line = text.split("\n")[0].strip()
-    if any(p.match(first_line) for p in NOISE_PATTERNS):
-        return True
+    word_count = len(text.split())
+    for p in NOISE_PATTERNS:
+        if p.match(first_line):
+            # fig/figure references in longer chunks are valid content
+            if p.pattern.startswith('^fig') or p.pattern.startswith('^figure'):
+                if word_count < 50:
+                    return True
+            else:
+                return True
 
     return False
 
@@ -355,9 +364,8 @@ class ResearchPaperRetriever:
         query_vec = np.array(query_vec).astype("float32")
         faiss.normalize_L2(query_vec)
 
-        # Pull 20 candidates (wider than final top_k) to give
-        # section boosting a chance to promote the right chunk
-        retrieval_pool = max(top_k * 4, 20)
+        # Wide retrieval to give section boosting a fair chance
+        retrieval_pool = max(top_k * 6, 30)
         D, I = self.index.search(query_vec, retrieval_pool)
 
         initial_chunks = [self.chunks[i] for i in I[0] if i >= 0]
@@ -374,21 +382,37 @@ class ResearchPaperRetriever:
 
         # Filter out invalid indices and noise chunks
         clean_set = set(self.clean_indices)
-        candidates = [
-            (int(idx), float(score))
-            for score, idx in zip(D[0], I[0])
-            if idx >= 0 and int(idx) in clean_set
-        ]
+        candidate_set = set()
+        candidates = []
+        for score, idx in zip(D[0], I[0]):
+            idx = int(idx)
+            if idx >= 0 and idx in clean_set and idx not in candidate_set:
+                candidates.append((idx, float(score)))
+                candidate_set.add(idx)
+
+        # -------- Stage 3.5: Inject section-prior chunks --------
+        # If we know from query structure which section to look in,
+        # guarantee those chunks are in the candidate pool even if
+        # FAISS didn't retrieve them (solves embedding blindness).
+        preferred_sections = get_section_prior(query)
+
+        if preferred_sections:
+            for idx in self.clean_indices:
+                if idx in candidate_set:
+                    continue
+                section = self.chunks[idx].get("section", "").lower()
+                for pref in preferred_sections:
+                    if pref.lower() in section:
+                        candidates.append((idx, 0.0))  # placeholder score
+                        candidate_set.add(idx)
+                        break
 
         # -------- Stage 4: Cross-Encoder Rerank --------
         ranked = self._rerank(query, candidates)
 
         # -------- Stage 5: Section Prior Boosting --------
-        # This is the key Document Structure Awareness step:
-        # after the reranker scores chunks, we add a bonus for
+        # After the reranker scores all candidates, add a bonus for
         # chunks from sections that match the query's intent.
-        preferred_sections = get_section_prior(query)
-
         if preferred_sections:
             boosted = []
             for idx, score in ranked:

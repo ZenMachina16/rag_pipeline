@@ -25,7 +25,8 @@ import re
 SECTION_PRIOR_RULES = [
     # ---------- Reward / Training ----------
     (r'reward|penalty|incentive|collision penalty|smooth trajectory|'
-     r'reward.*time|reward.*change|reward shaping',
+     r'reward.*time|reward.*change|reward shaping|encouraged.*training|'
+     r'encouraged.*during',
      ["reward", "3.1"]),
 
     # ---------- Obstacle avoidance mechanism ----------
@@ -57,7 +58,8 @@ SECTION_PRIOR_RULES = [
 
     # ---------- Image dataset / training data ----------
     (r'dataset.*prepared|images.*collected|how many images|'
-     r'dataset.*split|training.*dataset',
+     r'dataset.*split|training.*dataset|training.*detection|'
+     r'image.*acquisition',
      ["dataset", "image", "4.2"]),
 
     # ---------- Scenario results (numbered scenario sections) ----------
@@ -116,7 +118,7 @@ def get_section_prior(query: str) -> list[str]:
 def compute_section_boost(
     chunk_section: str,
     preferred_sections: list[str],
-    boost: float = 5.0,
+    boost: float = 8.0,
 ) -> float:
     """
     Returns `boost` if chunk_section matches any preferred section,
