@@ -2,3 +2,4 @@ rag_env/
 __pycache__
 chunks.pkl
 faiss_index.bin
+bm25.pkl
