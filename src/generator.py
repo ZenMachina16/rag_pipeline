@@ -1,64 +1,84 @@
 import os
-from dotenv import load_dotenv
-load_dotenv(os.path.join(os.path.dirname(__file__), ".env"))
-
 from groq import Groq
+from dotenv import load_dotenv
+
 from retriever import ResearchPaperRetriever
 
-class ResearchPaperGenerator:
+
+# Load ENV
+load_dotenv(os.path.join(os.path.dirname(__file__), ".env"))
+
+
+class ResearchPaperRAG:
 
     def __init__(self):
 
         print("Initializing Groq client...")
-        self.client = Groq(api_key=os.environ.get("GROQ_API_KEY"))
+        self.client = Groq(
+            api_key=os.environ.get("GROQ_API_KEY")
+        )
 
         print("Loading Retriever...")
         self.retriever = ResearchPaperRetriever()
 
-    def build_prompt(self, query, chunks):
+    # ---------- Context Builder ----------
+    def build_context(self, results, max_chunks=4):
 
-        context = "\n\n".join(
-            [f"[Section: {c['section']}]\n{c['text']}" for c in chunks]
-        )
+        context_parts = []
 
-        prompt = f"""
+        for i, r in enumerate(results[:max_chunks], start=1):
 
+            section = r.get("section", "unknown")
+            text = r.get("text", "")
 
+            block = f"""
+[Chunk {i} | Section: {section}]
+{text}
+"""
+            context_parts.append(block)
+
+        return "\n".join(context_parts)
+
+    # ---------- Prompt Builder ----------
+    def build_prompt(self, query, context):
+
+        return f"""
 You are a research assistant.
 
-Answer the question ONLY using the provided research paper context.
+Answer ONLY using the provided context.
 
-If answer not found, say "Not enough information".
-
-Question:
-{query}
+Rules:
+- Do NOT hallucinate
+- If answer not present → say "Not found in paper"
+- Always cite chunk number and section
+- Be concise but informative
+- Merge ideas from multiple chunks
 
 Context:
 {context}
 
-Instructions:
+Question:
+{query}
 
-* Give structured academic answer
-* Mention important findings
-* Use technical language
-* Be concise
-  """
+Answer:
+"""
 
-        return prompt
-
-
+    # ---------- Main Answer Function ----------
     def answer(self, query):
 
-        chunks = self.retriever.search(query, top_k=5)
+        results = self.retriever.search(query, top_k=10)
 
-        prompt = self.build_prompt(query, chunks)
+        context = self.build_context(results)
+
+        prompt = self.build_prompt(query, context)
 
         response = self.client.chat.completions.create(
             model="llama-3.3-70b-versatile",
             messages=[
                 {"role": "user", "content": prompt}
             ],
-            temperature=0.2
+            temperature=0.1,
+            max_tokens=600
         )
 
         return response.choices[0].message.content
@@ -66,13 +86,13 @@ Instructions:
 
 if __name__ == "__main__":
 
-    rag = ResearchPaperGenerator()
+    rag = ResearchPaperRAG()
 
     while True:
 
         q = input("\nAsk Question: ")
 
-        if q == "quit":
+        if q.lower() == "quit":
             break
 
         ans = rag.answer(q)
