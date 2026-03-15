@@ -122,7 +122,9 @@ import re
 import faiss
 import pickle
 import numpy as np
-
+from query_expander import expand_query
+from prf_expander import expand_query_prf
+from section_prior import get_section_prior, compute_section_boost
 from sentence_transformers import SentenceTransformer, CrossEncoder
 
 
@@ -343,55 +345,68 @@ class ResearchPaperRetriever:
     # Public API
     # ------------------------------------------------------------------
 
-    def search(
-        self,
-        query:          str,
-        top_k:          int   = None,
-        dense_weight:   float = 0.6,
-        bm25_weight:    float = 0.4,
-        use_reranker:   bool  = True,
-    ) -> list[dict]:
-        """
-        Full pipeline:
-          1. Dense top-30  +  BM25 top-30
-          2. Hybrid fusion with independent normalisation  → top-20 pool
-          3. Cross-encoder reranking                       → top-k results
+    def search(self, query, top_k=5):
 
-        Parameters
-        ----------
-        query         : natural language question
-        top_k         : number of results to return (default: self.final_top_k)
-        dense_weight  : weight for normalised dense score  (default 0.6)
-        bm25_weight   : weight for normalised BM25 score   (default 0.4)
-        use_reranker  : set False to skip cross-encoder (faster, less accurate)
-        """
-        top_k = top_k or self.final_top_k
+        # -------- Stage 0: Query Expansion --------
+        expanded_query = expand_query(query)
 
-        # stage 1
-        dense_scores = self._dense_search(query)
-        bm25_scores  = self._bm25_search(query)
+        # -------- Stage 1: Initial Retrieval (wider pool) --------
+        query_vec = self.bi_encoder.encode([expanded_query])
+        query_vec = np.array(query_vec).astype("float32")
+        faiss.normalize_L2(query_vec)
 
-        # stage 2
-        candidates = self._hybrid_fusion(
-            dense_scores, bm25_scores,
-            dense_weight=dense_weight,
-            bm25_weight=bm25_weight,
-        )
+        # Pull 20 candidates (wider than final top_k) to give
+        # section boosting a chance to promote the right chunk
+        retrieval_pool = max(top_k * 4, 20)
+        D, I = self.index.search(query_vec, retrieval_pool)
 
-        # stage 3
-        if use_reranker:
-            ranked = self._rerank(query, candidates)
-        else:
-            ranked = candidates     # already sorted by hybrid score
+        initial_chunks = [self.chunks[i] for i in I[0] if i >= 0]
 
-        # assemble results
-        results = []
+        # -------- Stage 2: PRF Expansion --------
+        prf_query = expand_query_prf(expanded_query, initial_chunks[:10])
+
+        # -------- Stage 3: Re-retrieve with expanded query --------
+        query_vec = self.bi_encoder.encode([prf_query])
+        query_vec = np.array(query_vec).astype("float32")
+        faiss.normalize_L2(query_vec)
+
+        D, I = self.index.search(query_vec, retrieval_pool)
+
+        # Filter out invalid indices and noise chunks
+        clean_set = set(self.clean_indices)
+        candidates = [
+            (int(idx), float(score))
+            for score, idx in zip(D[0], I[0])
+            if idx >= 0 and int(idx) in clean_set
+        ]
+
+        # -------- Stage 4: Cross-Encoder Rerank --------
+        ranked = self._rerank(query, candidates)
+
+        # -------- Stage 5: Section Prior Boosting --------
+        # This is the key Document Structure Awareness step:
+        # after the reranker scores chunks, we add a bonus for
+        # chunks from sections that match the query's intent.
+        preferred_sections = get_section_prior(query)
+
+        if preferred_sections:
+            boosted = []
+            for idx, score in ranked:
+                section = self.chunks[idx].get("section", "")
+                boost = compute_section_boost(section, preferred_sections)
+                boosted.append((idx, score + boost))
+
+            # Re-sort after boosting
+            ranked = sorted(boosted, key=lambda x: x[1], reverse=True)
+
+        # -------- Assemble final results --------
+        final_results = []
         for idx, score in ranked[:top_k]:
             chunk = self.chunks[idx].copy()
             chunk["score"] = round(float(score), 4)
-            results.append(chunk)
+            final_results.append(chunk)
 
-        return results
+        return final_results
 
 
 # ---------------------------------------------------------------------------
@@ -419,7 +434,7 @@ if __name__ == "__main__":
             use_reranker = False
             query = raw.replace("--no-rerank", "").strip()
 
-        results = retriever.search(query, use_reranker=use_reranker)
+        results = retriever.search(query, top_k=5)
 
         for i, r in enumerate(results):
             print("\n" + "=" * 50)

@@ -1,0 +1,52 @@
+[
+  {
+    "query": "ppo reward function",
+    "relevant_sections": ["3.1. reward function design"],
+    "keywords": ["reward", "ppo", "goal attraction"]
+  },
+  {
+    "query": "rgb-d obstacle detection",
+    "relevant_sections": ["2.4. dynamic obstacle avoidance mechanism"],
+    "keywords": ["rgb-d", "yolo", "obstacle", "depth"]
+  },
+  {
+    "query": "rrt algorithm",
+    "relevant_sections": ["2.2.1. basic principles of the rrt algorithm"],
+    "keywords": ["rrt", "sampling", "tree"]
+  },
+  {
+    "query": "a star global path planning",
+    "relevant_sections": ["2.1. global path planning"],
+    "keywords": ["a*", "heuristic", "global path"]
+  },
+  {
+    "query": "b spline smoothing",
+    "relevant_sections": ["2.2.1. basic principles of the rrt algorithm"],
+    "keywords": ["b-spline", "smoothing", "trajectory"]
+  },
+  {
+    "query": "dynamic obstacle avoidance system",
+    "relevant_sections": ["2.4. dynamic obstacle avoidance mechanism"],
+    "keywords": ["dynamic", "avoidance", "occupancy map"]
+  },
+  {
+    "query": "experimental findings of the paper",
+    "relevant_sections": ["6. conclusion"],
+    "keywords": ["success rate", "experimental", "results"]
+  },
+  {
+    "query": "image dataset training",
+    "relevant_sections": ["4.2. image dataset acquisition and training"],
+    "keywords": ["dataset", "training", "rgb"]
+  },
+  {
+    "query": "hierarchical path planning framework",
+    "relevant_sections": ["1.4. contributions of the research work"],
+    "keywords": ["hierarchical", "framework", "integration"]
+  },
+  {
+    "query": "limitations of reinforcement learning",
+    "relevant_sections": ["1.2. problem description of path planning"],
+    "keywords": ["training", "generalization", "slow convergence"]
+  }
+]

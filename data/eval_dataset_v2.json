@@ -1,0 +1,54 @@
+[
+{"query": "how does the robot learn to reach the goal", "relevant_section": "3.1. reward function design"},
+{"query": "how is obstacle avoidance encouraged during training", "relevant_section": "3.1. reward function design"},
+{"query": "what penalties are given when robot collides", "relevant_section": "3.1. reward function design"},
+{"query": "how is smooth trajectory enforced", "relevant_section": "3.1. reward function design"},
+{"query": "how does reward change over time steps", "relevant_section": "3.1. reward function design"},
+
+{"query": "how are obstacles detected in the environment", "relevant_section": "2.4. dynamic obstacle avoidance mechanism"},
+{"query": "how is depth information used for planning", "relevant_section": "2.4. dynamic obstacle avoidance mechanism"},
+{"query": "how is occupancy map built", "relevant_section": "2.4. dynamic obstacle avoidance mechanism"},
+{"query": "how does system respond to moving obstacles", "relevant_section": "2.4. dynamic obstacle avoidance mechanism"},
+{"query": "how perception and planning form a loop", "relevant_section": "2.4. dynamic obstacle avoidance mechanism"},
+
+{"query": "what is role of A star in planning", "relevant_section": "2.1. global path planning"},
+{"query": "how global path is generated", "relevant_section": "2.1. global path planning"},
+{"query": "what heuristic cost function is used", "relevant_section": "2.1. global path planning"},
+
+{"query": "how random sampling helps path planning", "relevant_section": "2.2.1. basic principles of the rrt algorithm"},
+{"query": "why rrt paths are not smooth", "relevant_section": "2.2.1. basic principles of the rrt algorithm"},
+{"query": "how b spline improves trajectory", "relevant_section": "2.2.1. basic principles of the rrt algorithm"},
+{"query": "how collision constraints are handled", "relevant_section": "2.2.1. basic principles of the rrt algorithm"},
+
+{"query": "how reinforcement learning improves adaptability", "relevant_section": "1.2. problem description of path planning"},
+{"query": "why traditional planners fail in dynamic environments", "relevant_section": "1.2. problem description of path planning"},
+{"query": "what challenges arise in high dimensional path planning", "relevant_section": "1.2. problem description of path planning"},
+
+{"query": "what are key contributions of this research", "relevant_section": "1.4. contributions of the research work"},
+{"query": "how hierarchical planning framework works", "relevant_section": "1.4. contributions of the research work"},
+{"query": "how rgb d perception is integrated", "relevant_section": "1.4. contributions of the research work"},
+
+{"query": "what simulation platform was used", "relevant_section": "4. experimental setup"},
+{"query": "what robot model is used", "relevant_section": "4. experimental setup"},
+{"query": "what hardware configuration was used", "relevant_section": "4. experimental setup"},
+
+{"query": "how training dataset for detection was prepared", "relevant_section": "4.2. image dataset acquisition and training"},
+{"query": "how many images were collected", "relevant_section": "4.2. image dataset acquisition and training"},
+{"query": "how dataset was split", "relevant_section": "4.2. image dataset acquisition and training"},
+
+{"query": "what happens in no obstacle scenario", "relevant_section": "1. no obstacle scenario"},
+{"query": "how algorithm performs with single obstacle", "relevant_section": "2. single static obstacle"},
+{"query": "how performance changes with multiple obstacles", "relevant_section": "3. multiple static obstacles"},
+{"query": "how system performs in dynamic obstacle environment", "relevant_section": "4. dynamic obstacles"},
+
+{"query": "what are main experimental findings", "relevant_section": "6. conclusion"},
+{"query": "what success rates were achieved", "relevant_section": "6. conclusion"},
+{"query": "what limitations were observed", "relevant_section": "6. conclusion"},
+{"query": "future improvements suggested by authors", "relevant_section": "6. conclusion"},
+{"query": "how perception errors affect performance", "relevant_section": "6. conclusion"},
+
+{"query": "how noise annealing helps training", "relevant_section": "1. noise annealing mechanism"},
+{"query": "why gaussian noise added to actions", "relevant_section": "1. noise annealing mechanism"},
+{"query": "how training termination decided", "relevant_section": "3. termination criteria and policy saving"},
+{"query": "how path matching reward guides policy", "relevant_section": "2. path matching reward guidance"}
+]
